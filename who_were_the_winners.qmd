@@ -1,0 +1,43 @@
+---
+title: "Assignment 6 - Who Were the Winners?"
+author: "Rachel Swick"
+date: last-modified
+format: html
+---
+
+```{r}
+# Load libraries
+library(DBI)
+library(dplyr)
+library(dbplyr)
+
+# Connect to the DuckDB database
+dir = here::here("../bren-eds213-data/database/database.db")
+conn <- dbConnect(duckdb::duckdb(), dbdir = dir)
+
+# Reference the tables
+eggs <- tbl(conn, "Bird_eggs")
+nests <- tbl(conn, "Bird_nests")
+observers <- tbl(conn, "Personnel")
+
+# Join and compute total eggs per observer
+top_observers <- eggs %>%
+  inner_join(nests, by = "Nest_ID") %>% 
+  inner_join(observers, by = join_by("Observer" == "Abbreviation")) %>% 
+  group_by(Name) %>%
+  summarise(total_eggs = n(), .groups = "drop") %>%
+  arrange(desc(total_eggs)) %>% 
+  slice_max(order_by = total_eggs, n = 3, with_ties = FALSE) 
+
+# Show the result
+print(top_observers)
+
+# Show the generated SQL query
+top_observers %>% show_query()
+```
+I only used a single R statement. It did not use an SQL Limit clause. 
+
+
+
+
+
